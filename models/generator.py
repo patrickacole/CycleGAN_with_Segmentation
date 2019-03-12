@@ -4,6 +4,11 @@ from tensorflow.keras import layers
 
 
 class ReflectionPad2D(layers.Layer):
+    """
+    Reflection Padding Layer
+
+    Pads an image with format channels_last using reflection
+    """
     def __init__(self, padding, **kwargs):
         """
         @param padding: a 4-tuple, or int padding
@@ -27,16 +32,10 @@ class ReflectionPad2D(layers.Layer):
         super(ReflectionPad2D, self).build(input_shape)
 
     def call(self, inputs):
-        # Define your forward pass here,
-        # using layers you previously defined (in `__init__`).
-        # make padding have correct shape, according to inputs self.padding
         x = tf.pad(inputs, self.padding, "REFLECT")
         return x
 
     def compute_output_shape(self, input_shape):
-        # You need to override this function if you want to use the subclassed model
-        # as part of a functional-style model.
-        # Otherwise, this method is optional.
         shape = tf.TensorShape(input_shape).as_list()
         shape[-3] = shape[-3] + sum(self.padding[0])
         shape[-2] = shape[-2] + sum(self.padding[1])
@@ -44,6 +43,11 @@ class ReflectionPad2D(layers.Layer):
 
 
 class InstanceNorm2D(layers.Layer):
+    """
+    Normalize the outputs of an image with format channels_last
+    
+    Normalization done according to https://arxiv.org/pdf/1607.08022.pdf
+    """
     def __init__(self, eps=1e-5, momentum=0.1, **kwargs):
         super(InstanceNorm2D, self).__init__(**kwargs)
         self.eps = tf.constant(eps)
@@ -53,26 +57,52 @@ class InstanceNorm2D(layers.Layer):
         super(InstanceNorm2D, self).build(input_shape)
 
     def call(self, inputs):
-        # Define your forward pass here,
-        # using layers you previously defined (in `__init__`).
-        # make padding have correct shape, according to inputs self.padding
         mean = tf.expand_dims(tf.expand_dims(tf.reduce_mean(inputs, axis=[-3, -2]), 1), 1)
         covariates = tf.expand_dims(tf.expand_dims(tf.reduce_mean(tf.square(inputs - mean), axis=[-3, -2]), 1), 1)
         x = (1-self.momentum) * (inputs - mean)/tf.sqrt(covariates+self.eps) + self.momentum*inputs
         return x
 
     def compute_output_shape(self, input_shape):
-        # You need to override this function if you want to use the subclassed model
-        # as part of a functional-style model.
-        # Otherwise, this method is optional.
         return tf.TensorShape(input_shape)
 
 
-class ResidualLayer():
-    pass
+class ResidualLayer(layers.Layer):
+    """
+    Residual layer containing two convolutions
+    """
+    def __init__(self, ngf, **kwargs):
+        super(ResidualLayer, self).__init__(**kwargs)
+        self.ngf = ngf
+
+    def build(self, input_shape):
+        self.pad1 = ReflectionPad2D(1)
+        self.conv1 = layers.Conv2D(self.ngf, kernel_size=3, strides=1, padding='valid', use_bias=True)
+        self.pad2 = ReflectionPad2D(1)
+        self.conv2 = layers.Conv2D(self.ngf, kernel_size=3, strides=1, padding='valid', use_bias=True)
+        for weight in self.conv1.trainable_weights:
+            self.add_weight(weight)
+        for weight in self.conv2.trainable_weights:
+            self.add_weight(weight)
+        super(ResidualLayer, self).build(input_shape)
+
+    def call(self, inputs):
+        return self.conv2(self.pad2(tf.nn.relu(self.conv1(self.pad1(inputs))))) + inputs
+
+    def compute_output_shape(self, input_shape):
+        return tf.TensorShape(input_shape)
 
 
 class Generator(tf.keras.Model):
+    """
+    Generator architecture from CycleGAN paper
+
+    Contains:
+        A convolution with kernel size 7
+        Two downsampling layers (using Conv2D w/ strides=2)
+        Six residual layers
+        Two upsampling layers (using Conv2DTranspose w/ strides=2)
+        A convolution with kernel size 7
+    """
     def __init__(self, output_nc, ngf):
         super(Generator, self).__init__(name='generator')
         self.output_nc = output_nc
@@ -82,22 +112,25 @@ class Generator(tf.keras.Model):
         self.model.add(InstanceNorm2D())
         self.model.add(layers.ReLU())
         n_downsampling = 2
-        for i in range(n_downsampling):  # add downsampling layers
+        #add downsampling layers
+        for i in range(n_downsampling):
             mult = 2 ** i
-            #self.model.add(layers.ZeroPadding2D(1, data_format='channels_last'))
             self.model.add(layers.Conv2D(filters=ngf*mult*2, kernel_size=3, strides=2, padding='valid', use_bias=True, data_format='channels_last'))
             self.model.add(InstanceNorm2D())
             self.model.add(layers.ReLU())
         #residual layers
-        for i in range(n_downsampling):  # add upsampling layers
+        for _ in range(6):
+            self.model.add(ResidualLayer(ngf))
+        # add upsampling layers
+        for i in range(n_downsampling):
             mult = 2 ** (n_downsampling - i)
-            #self.model.add(layers.ZeroPadding2D(1, data_format='channels_last'))
             self.model.add(layers.Conv2DTranspose(int(ngf * mult / 2),
-                kernel_size=3, strides=2, padding='valid', use_bias=True, data_format='channels_last'))
-            if i == n_downsampling-1:
-                self.model.add(layers.ZeroPadding2D( ((1,0),(0,1)), data_format='channels_last'))
+                kernel_size=3, strides=2, padding='valid',
+                use_bias=True, data_format='channels_last',
+                output_padding=1 if i==n_downsampling-1 else None))
             self.model.add(InstanceNorm2D())
             self.model.add(layers.ReLU())
+
         self.model.add(ReflectionPad2D(3))
         self.model.add(layers.Conv2D(filters=output_nc, kernel_size=7, padding='valid', use_bias=True, data_format='channels_last'))
         self.model.add(layers.Activation('tanh'))
@@ -113,6 +146,7 @@ class Generator(tf.keras.Model):
         
 
 if __name__=="__main__":
-    model = Generator(1, 1)#tf.keras.Sequential()
+    model = Generator(2, 1)
     t = tf.constant(np.reshape(np.arange(256*256), [1, 256, 256, 1]), dtype=tf.float32)
+    #test case, a single 256 x 256 image with 1 channel
     print(model(t).shape)
