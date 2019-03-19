@@ -4,3 +4,4 @@ pip-selfcheck.json
 Scripts/
 tcl/
 *.swp
+__pycache__/
