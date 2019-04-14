@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     model = CycleGAN(out=param.out_nc, ngf=param.ngf, \
                      ndf=param.ndf, n_layers=param.n_layers)
-    optimizers = tf.optimizers.Adam(param.lr)
+    optimizers = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
 
     # Checkpoint paths
     G1_checkpoint_path = 'checkpoint/G1.ckpt'
