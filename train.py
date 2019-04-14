@@ -16,9 +16,7 @@ if __name__ == "__main__":
     param = Params(sys.argv[1])
 
     # load data
-    x_train = ... # TODO
-    y_train = ... # TODO
-    dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+    dataset = get_train_dataset(params)
     dataset = dataset.shuffle(buffer_size=param.buffer_size).batch(param.batch_size)
 
     model = CycleGAN(out=param.out_nc, ngf=param.ngf, \
