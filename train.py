@@ -4,6 +4,7 @@ import time
 import tensorflow as tf
 from tensorflow.keras import layers
 import sys
+import os
 
 from models.CycleGAN import *
 from utils.params import *
@@ -15,14 +16,20 @@ if __name__ == "__main__":
     param = Params(sys.argv[1])
 
     # load data
-    x_train = ...
-    y_train = ...
+    x_train = ... # TODO
+    y_train = ... # TODO
     dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     dataset = dataset.shuffle(buffer_size=param.buffer_size).batch(param.batch_size)
 
     model = CycleGAN(out=param.out_nc, ngf=param.ngf, \
                      ndf=param.ndf, n_layers=param.n_layers)
     optimizers = tf.optimizers.Adam(param.lr)
+
+    # Checkpoint paths
+    G1_checkpoint_path = 'checkpoint/G1.ckpt'
+    G2_checkpoint_path = 'checkpoint/G2.ckpt'
+    D1_checkpoint_path = 'checkpoint/D1.ckpt'
+    D2_checkpoint_path = 'checkpoint/D2.ckpt'
 
     for e in range(param.epoch):
         print(f'Starting epoch {e+1}')
@@ -45,4 +52,9 @@ if __name__ == "__main__":
             optimizer.apply_gradients(zip(gradD2, (model.D2).trainable_variables))
 
             if i%200 == 0:
-                print(f'Training loss at step {i}: {float(loss)}')
+                print(f'Training loss at epoch {e+1} step {i}: {float(loss)}')
+
+        (model.G1).save_weights(G1_checkpoint_path)
+        (model.G2).save_weights(G2_checkpoint_path)
+        (model.D1).save_weights(D1_checkpoint_path)
+        (model.D2).save_weights(D2_checkpoint_path)
