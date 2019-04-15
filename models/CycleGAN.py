@@ -1,22 +1,35 @@
+import os
 import tensorflow as tf
 from tensorflow.keras import layers
+from argparser import Namespace
 
 from generator import *
 from discriminator import *
 
 class CycleGAN():
-    def __init__(self, out_nc, nfg, ndf, n_layers):
+    def __init__(self, params):
+        # Checkpoint paths
+        checkpoint_paths = {}
+        checkpoint_paths['G1'] = 'checkpoint/G1/'
+        checkpoint_paths['G2'] = 'checkpoint/G2/'
+        checkpoint_paths['D1'] = 'checkpoint/D1/'
+        checkpoint_paths['D2'] = 'checkpoint/D2/'
+        for path in checkpoint_paths.values():
+            if not os.path.exists(path):
+                os.makedirs(path)
+        checkpoint_path = Namespace(**checkpoint_path)
+
         # G1: X -> Y
         # G2: Y -> X
-        self.G1 = Generator(out_nc, nfg)
-        self.G2 = Generator(out_nc, nfg)
-        self.D1 = Discriminator(ndf, n_layers)
-        self.D2 = Discriminator(ndf, n_layers)
+        self.G1 = Generator(params.out_nc, params.nfg)
+        self.G2 = Generator(params.out_nc, params.nfg)
+        self.D1 = Discriminator(params.ndf, params.n_layers)
+        self.D2 = Discriminator(params.ndf, params.n_layers)
 
         # discriminator loss function
         self.D_Loss = tf.keras.losses.mse
 
-    def gan_loss(self,y, x, choice=1):
+    def gan_loss(self, y, x, choice=1):
         if choice==1:
             return tf.mean(tf.log(self.D1(y))) + tf.mean(tf.log(1 - self.D1(self.G1(x))))
         return tf.mean(tf.log(self.D2(x))) + tf.mean(tf.log(1 - self.D2(self.G2(y))))
@@ -46,9 +59,21 @@ class CycleGAN():
             loss_true = self.D_Loss(d2_choice, d2_answer)
         return 0.5 * (loss_true + loss_fake)
 
-    def save(self):
-        # TODO
-        pass
+    def save(self, epoch):
+        self.G1.save_weights(os.path.join(checkpoint_paths.G1, f'cp_{epoch:04d}.ckpt'))
+        self.G2.save_weights(os.path.join(checkpoint_paths.G2, f'cp_{epoch:04d}.ckpt'))
+        self.D1.save_weights(os.path.join(checkpoint_paths.D1, f'cp_{epoch:04d}.ckpt'))
+        self.D2.save_weights(os.path.join(checkpoint_paths.D2, f'cp_{epoch:04d}.ckpt'))
+
+    def load(self, params):
+        latestG1 = tf.train.latest_checkpoint(checkpoint_paths.G1)
+        self.G1.load_weights(latestG1)
+        latestG2 = tf.train.latest_checkpoint(checkpoint_paths.G2)
+        self.G2.load_weights(latestG2)
+        latestD1 = tf.train.latest_checkpoint(checkpoint_paths.D1)
+        self.D1.load_weights(latestD1)
+        latestD2 = tf.train.latest_checkpoint(checkpoint_paths.D2)
+        self.D2.load_weights(latestD2)
 
     def __call__(self, x, y):
         return self.G1(x), self.G2(y)

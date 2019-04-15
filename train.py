@@ -19,17 +19,10 @@ if __name__ == "__main__":
     dataset = get_train_dataset(params)
     dataset = dataset.shuffle(buffer_size=param.buffer_size).batch(param.batch_size)
 
-    model = CycleGAN(out=param.out_nc, ngf=param.ngf, \
-                     ndf=param.ndf, n_layers=param.n_layers)
+    model = CycleGAN(params)
     optimizers = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
 
-    # Checkpoint paths
-    G1_checkpoint_path = 'checkpoint/G1.ckpt'
-    G2_checkpoint_path = 'checkpoint/G2.ckpt'
-    D1_checkpoint_path = 'checkpoint/D1.ckpt'
-    D2_checkpoint_path = 'checkpoint/D2.ckpt'
-
-    for e in range(param.epoch):
+    for e in range(param.epochs):
         print(f'Starting epoch {e+1}')
         epoch_start_time = time.time()
 
@@ -52,7 +45,5 @@ if __name__ == "__main__":
             if i%200 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(loss)}')
 
-        (model.G1).save_weights(G1_checkpoint_path)
-        (model.G2).save_weights(G2_checkpoint_path)
-        (model.D1).save_weights(D1_checkpoint_path)
-        (model.D2).save_weights(D2_checkpoint_path)
+        if (e + 1) % 10:
+            model.save(e + 1)
