@@ -10,9 +10,9 @@ def get_train_dataset(params, pprocess=True):
     @param params   : Params object
     @return dataset : tf.data.Dataset object
     """
-    x = preprocess(load_dir(params.train_path_a,params.image_size))
+    x = load_dir(params.train_path_a,params.image_size,pprocess=pprocess)
     x = tf.data.Dataset.from_tensor_slices(x)
-    y = preprocess(load_dir(params.train_path_b,params.image_size))
+    y = load_dir(params.train_path_b,params.image_size,pprocess=pprocess)
     y = tf.data.Dataset.from_tensor_slices(y)
     return x, y
 
@@ -26,7 +26,7 @@ def get_test_dataset(params):
     y = preprocess(load_dir(params.test_path_b,params.image_size))
     return tf.data.Dataset.from_tensor_slices((x, y))
 
-def load_dir(path, size):
+def load_dir(path, size, pprocess=False):
     """
     loads images from a given path as a given size
     @param path : string for path to image directory
@@ -42,16 +42,19 @@ def load_dir(path, size):
         filename = os.path.join(path, file)
         img = Image.open(filename)
         img = img.resize((size,size),Image.BILINEAR)
-        imgs += [np.array(img)]
+        img = np.array(img)
+        if pprocess:
+            img = preprocess(img)
+        imgs += [img]
     return np.array(imgs)
 
 def preprocess(img):
     """
     transform image to be of range [-1,1]
-    @param img  : numpy array of shape (n,size,size,3)
-    @return img : numpy array of shape (n,size,size,3)
+    @param img  : numpy array of shape (size,size,3)
+    @return img : numpy array of shape (size,size,3)
     """
-    img = (img - np.mean(img,axis=(2,1))[:,np.newaxis,np.newaxis,:]) \
-           / np.std(img,axis=(2,1))[:,np.newaxis,np.newaxis,:]
+    img = (img - np.mean(img,axis=(1,0))[np.newaxis,np.newaxis,:]) \
+           / np.std(img,axis=(1,0))[np.newaxis,np.newaxis,:]
     return img
 
