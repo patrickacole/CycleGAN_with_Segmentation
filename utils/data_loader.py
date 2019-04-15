@@ -34,7 +34,7 @@ def load_dir(path, size, pprocess=False):
     @return imgs: np.array of shape (n,size,size,3)
     """
     if not os.path.exists(path):
-        raise(f'Given path {path} does not exist...')
+        raise IOError(f'Given path {path} does not exist...')
     imgs = []
     for file in os.listdir(path):
         if 'jpg' not in file:
