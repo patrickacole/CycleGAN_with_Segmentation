@@ -1,10 +1,10 @@
 import os
 import tensorflow as tf
 from tensorflow.keras import layers
-from argparser import Namespace
+from argparse import Namespace
 
-from generator import *
-from discriminator import *
+from models.generator import *
+from models.discriminator import *
 
 class CycleGAN():
     def __init__(self, params):

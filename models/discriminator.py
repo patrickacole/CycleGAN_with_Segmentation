@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
-from generator import InstanceNorm2D
+from models.generator import InstanceNorm2D
 
 class Discriminator(tf.keras.Model):
     '''

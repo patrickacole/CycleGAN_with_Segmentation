@@ -16,7 +16,7 @@ if __name__ == "__main__":
     param = Params(sys.argv[1])
 
     # load data
-    dataset = get_train_dataset(params)
+    dataset = params.get_train_dataset(params)
     dataset = dataset.shuffle(buffer_size=param.buffer_size).batch(param.batch_size)
 
     model = CycleGAN(params)
