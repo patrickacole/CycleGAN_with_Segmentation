@@ -8,6 +8,7 @@ import os
 
 from models.CycleGAN import *
 from utils.params import *
+from utils.data_loader import *
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     param = Params(sys.argv[1])
 
     # load data
-    dataset = params.get_train_dataset(params)
+    dataset = get_train_dataset(param)
     dataset = dataset.shuffle(buffer_size=param.buffer_size).batch(param.batch_size)
 
     model = CycleGAN(params)

@@ -31,12 +31,12 @@ def load_dir(path, size, preprocess=True):
     @param size : int for size desired of images
     @return imgs: np.array of shape (n,size,size,3)
     """
-    if not os.path.exist(path):
+    if not os.path.exists(path):
         print(f'Given path {path} does not exist...')
         sys.exit(1)
     imgs = []
     for file in os.listdir(path):
-        if 'jpg' is not in file:
+        if 'jpg' not in file:
             continue
         filename = os.path.join(file,path)
         img = Image.open(filename)
