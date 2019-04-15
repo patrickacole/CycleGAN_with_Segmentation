@@ -4,14 +4,14 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-def get_train_dataset(params, preprocess=True):
+def get_train_dataset(params, pprocess=True):
     """
     loads training data
     @param params   : Params object
     @return dataset : tf.data.Dataset object
     """
-    x = load_dir(params.train_path_a,params.image_size,preprocess=preprocess)
-    y = load_dir(params.train_path_b,params.image_size,preprocess=preprocess)
+    x = load_dir(params.train_path_a,params.image_size,pprocess=pprocess)
+    y = load_dir(params.train_path_b,params.image_size,pprocess=pprocess)
     return tf.data.Dataset.from_tensor_slices((x, y))
 
 def get_test_dataset(params):
@@ -24,7 +24,7 @@ def get_test_dataset(params):
     y = preprocess(load_dir(params.test_path_b,params.image_size))
     return tf.data.Dataset.from_tensor_slices((x, y))
 
-def load_dir(path, size, preprocess=True):
+def load_dir(path, size, pprocess=True):
     """
     loads images from a given path as a given size
     @param path : string for path to image directory
@@ -38,11 +38,11 @@ def load_dir(path, size, preprocess=True):
     for file in os.listdir(path):
         if 'jpg' not in file:
             continue
-        filename = os.path.join(file,path)
+        filename = os.path.join(path, file)
         img = Image.open(filename)
         img = img.resize((size,size),Image.BILINEAR)
         img = np.array(img)
-        if preprocess:
+        if pprocess:
             img = preprocess(img)
         imgs += [img]
     return np.array(imgs)

@@ -17,9 +17,11 @@ if __name__ == "__main__":
     param = Params(sys.argv[1])
 
     # load data
+    print("Loading data...")
     dataset = get_train_dataset(param)
     dataset = dataset.shuffle(buffer_size=param.buffer_size).batch(param.batch_size)
 
+    print("Creating model...")
     model = CycleGAN(params)
     optimizers = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
 
