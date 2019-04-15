@@ -27,7 +27,7 @@ if __name__ == "__main__":
         epoch_start_time = time.time()
 
         for i, (data_x, data_y) in enumerate(dataset):
-            with tf.GradientTape() as tape:
+            with tf.GradientTape(persistent=True) as tape:
                 loss = model.total_loss(data_y, data_x, param.lmbda)
                 loss_d1 = model.discriminator_loss(data_y, data_x, choice=1)
                 loss_d2 = model.discriminator_loss(data_y, data_x, choice=2)
