@@ -1,9 +1,9 @@
 {
     "d_path":"dataset",
-    "train_path_a":"dataset/monet2photo/trainA",
-    "train_path_b":"dataset/monet2photo/trainB",
-    "test_path_a":"dataset/monet2photo/testA",
-    "test_path_b":"dataset/monet2photo/testB",
+    "train_path_a":"datasets/monet2photo/trainA",
+    "train_path_b":"datasets/monet2photo/trainB",
+    "test_path_a":"datasets/monet2photo/testA",
+    "test_path_b":"datasets/monet2photo/testB",
     "image_size":256,
     "buff_size":1024,
     "batch_size":64,

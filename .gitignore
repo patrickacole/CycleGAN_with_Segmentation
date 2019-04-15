@@ -5,3 +5,4 @@ Scripts/
 tcl/
 *.swp
 __pycache__/
+datasets/

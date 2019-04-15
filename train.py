@@ -14,6 +14,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python3 train.py <params_path>")
         exit(1)
+    print("Loading params...")
     param = Params(sys.argv[1])
 
     # load data
