@@ -20,8 +20,8 @@ if __name__ == "__main__":
     # load data
     print("Loading data...")
     datasetx, datasety = get_train_dataset(param)
-    datasetx = datasetx.shuffle(buffer_size=max(param.buffer_size,len(datasetx))).batch(param.batch_size)
-    datasety = datasety.shuffle(buffer_size=max(param.buffer_size,len(datasety))).batch(param.batch_size)
+    datasetx = datasetx.shuffle(buffer_size=max(param.buff_size,tf.size(datasetx)[0])).batch(param.batch_size)
+    datasety = datasety.shuffle(buffer_size=max(param.buff_size,tf.size(datasety)[0])).batch(param.batch_size)
 
     print("Creating model...")
     model = CycleGAN(params)

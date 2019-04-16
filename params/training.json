@@ -4,7 +4,7 @@
     "train_path_b":"datasets/monet2photo/trainB",
     "test_path_a":"datasets/monet2photo/testA",
     "test_path_b":"datasets/monet2photo/testB",
-    "image_size":256,
+    "image_size":128,
     "buff_size":1024,
     "batch_size":64,
     "out_nc":3,
