@@ -120,7 +120,7 @@ class Generator(tf.keras.Model):
             self.model.add(layers.ReLU())
         #residual layers
         for _ in range(6):
-            self.model.add(ResidualLayer(ngf))
+            self.model.add(ResidualLayer(ngf*(2**n_downsampling)))
         # add upsampling layers
         for i in range(n_downsampling):
             mult = 2 ** (n_downsampling - i)

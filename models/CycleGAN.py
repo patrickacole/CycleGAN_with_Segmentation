@@ -17,12 +17,12 @@ class CycleGAN():
         for path in checkpoint_paths.values():
             if not os.path.exists(path):
                 os.makedirs(path)
-        checkpoint_path = Namespace(**checkpoint_path)
+        checkpoint_path = Namespace(**checkpoint_paths)
 
         # G1: X -> Y
         # G2: Y -> X
-        self.G1 = Generator(params.out_nc, params.nfg)
-        self.G2 = Generator(params.out_nc, params.nfg)
+        self.G1 = Generator(params.out_nc, params.ngf)
+        self.G2 = Generator(params.out_nc, params.ngf)
         self.D1 = Discriminator(params.ndf, params.n_layers)
         self.D2 = Discriminator(params.ndf, params.n_layers)
 

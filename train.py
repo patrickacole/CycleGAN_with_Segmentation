@@ -3,28 +3,27 @@ import numpy.linalg as la
 import time
 import tensorflow as tf
 from tensorflow.keras import layers
-import sys
-import os
+import argparse
 
 from models.CycleGAN import *
 from utils.params import *
 from utils.data_loader import *
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 train.py <params_path>")
-        exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("params_path", help="param file", type=str)
+    args = parser.parse_args()
     print("Loading params...")
-    param = Params(sys.argv[1])
+    param = Params(args.params_path)
 
     # load data
     print("Loading data...")
     datasetx, datasety = get_train_dataset(param)
-    datasetx = datasetx.shuffle(buffer_size=max(param.buff_size,tf.size(datasetx)[0])).batch(param.batch_size)
-    datasety = datasety.shuffle(buffer_size=max(param.buff_size,tf.size(datasety)[0])).batch(param.batch_size)
+    datasetx = datasetx.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
+    datasety = datasety.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
 
     print("Creating model...")
-    model = CycleGAN(params)
+    model = CycleGAN(param)
     optimizers = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
 
     for e in range(param.epochs):
