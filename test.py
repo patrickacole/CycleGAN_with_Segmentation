@@ -41,7 +41,6 @@ if __name__ == "__main__":
     print("Creating model...")
     model = CycleGAN(param)
     model.load(param)
-    optimizer = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
 
     print("Beginning to test...")
     for i, fx, data_x in enumerate(datasetx):
