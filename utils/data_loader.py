@@ -11,9 +11,9 @@ def get_train_dataset(params, pprocess=True):
     @return dataset : tf.data.Dataset object
     """
     x = load_dir(params.train_path_a,params.image_size,pprocess=pprocess)
-    x = tf.data.Dataset.from_tensor_slices(tf.placeholder(x))
+    x = tf.data.Dataset.from_tensor_slices(x)
     y = load_dir(params.train_path_b,params.image_size,pprocess=pprocess)
-    y = tf.data.Dataset.from_tensor_slices(tf.placeholder(y))
+    y = tf.data.Dataset.from_tensor_slices(y)
     return x, y
 
 def get_test_dataset(params):
