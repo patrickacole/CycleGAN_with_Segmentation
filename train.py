@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     print("Creating model...")
     model = CycleGAN(param)
-    optimizers = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
+    optimizer = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
 
     for e in range(param.epochs):
         print(f'Starting epoch {e+1}')
