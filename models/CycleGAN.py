@@ -44,8 +44,8 @@ class CycleGAN():
         return loss
 
     def cycle_loss(self, y, x):
-        return tf.mean(tf.norm(self.G2(self.G1(x)) - x, ord=1)) + \
-               tf.mean(tf.norm(self.G1(self.G2(y)) - y, ord=1))
+        return tf.reduce_mean(tf.norm(self.G2(self.G1(x)) - x, ord=1)) + \
+               tf.reduce_mean(tf.norm(self.G1(self.G2(y)) - y, ord=1))
 
     def total_loss(self, y, x, lmbda):
         return 0.5 * (self.gan_loss(y, x, choice=1) + self.gan_loss(y, x, choice=2)) + \
