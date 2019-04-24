@@ -17,7 +17,7 @@ class CycleGAN():
         for path in self.checkpoint_paths.values():
             if not os.path.exists(path):
                 os.makedirs(path)
-        checkpoint_path = Namespace(**checkpoint_paths)
+        checkpoint_path = Namespace(**self.checkpoint_paths)
 
         # G1: X -> Y
         # G2: Y -> X
