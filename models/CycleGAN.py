@@ -17,7 +17,6 @@ class CycleGAN():
         for path in self.checkpoint_paths.values():
             if not os.path.exists(path):
                 os.makedirs(path)
-        checkpoint_path = Namespace(**self.checkpoint_paths)
 
         # G1: X -> Y
         # G2: Y -> X
@@ -66,10 +65,10 @@ class CycleGAN():
         return 0.5 * (tf.reduce_mean(loss_true) + tf.reduce_mean(loss_fake))
 
     def save(self, epoch):
-        self.G1.save_weights(os.path.join(self.checkpoint_paths.G1, f'cp_{epoch:04d}.ckpt'))
-        self.G2.save_weights(os.path.join(self.checkpoint_paths.G2, f'cp_{epoch:04d}.ckpt'))
-        self.D1.save_weights(os.path.join(self.checkpoint_paths.D1, f'cp_{epoch:04d}.ckpt'))
-        self.D2.save_weights(os.path.join(self.checkpoint_paths.D2, f'cp_{epoch:04d}.ckpt'))
+        self.G1.save_weights(os.path.join(self.checkpoint_paths['G1'], f'cp_{epoch:04d}.ckpt'))
+        self.G2.save_weights(os.path.join(self.checkpoint_paths['G2'], f'cp_{epoch:04d}.ckpt'))
+        self.D1.save_weights(os.path.join(self.checkpoint_paths['D1'], f'cp_{epoch:04d}.ckpt'))
+        self.D2.save_weights(os.path.join(self.checkpoint_paths['D2'], f'cp_{epoch:04d}.ckpt'))
 
     def load(self, params):
         latestG1 = tf.train.latest_checkpoint(self.checkpoint_paths['G1'])
