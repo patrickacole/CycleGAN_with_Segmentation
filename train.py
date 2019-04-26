@@ -47,7 +47,7 @@ if __name__ == "__main__":
                 optimizer.apply_gradients(zip(gradD1, (model.D1).trainable_variables))
                 optimizer.apply_gradients(zip(gradD2, (model.D2).trainable_variables))
 
-            if i%200 == 0:
+            if i%50 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(loss)}')
 
         if (e + 1) % 10:
