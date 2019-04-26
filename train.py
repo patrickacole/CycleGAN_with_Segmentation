@@ -28,7 +28,7 @@ if __name__ == "__main__":
     for e in range(param.epochs):
         print(f'Starting epoch {e+1}')
         epoch_start_time = time.time()
-
+        avgloss = 0.0
         datasetx = datasetx.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
         datasety = datasety.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
         for i, (data_x, data_y) in enumerate(zip(cycle(datasetx), datasety)):
@@ -47,8 +47,10 @@ if __name__ == "__main__":
             optimizer.apply_gradients(zip(gradD1, (model.D1).trainable_variables))
             optimizer.apply_gradients(zip(gradD2, (model.D2).trainable_variables))
 
-            if i%50 == 0:
-                print(f'Training loss at epoch {e+1} step {i}: {float(loss)}')
+            avgloss += loss
+
+            if i%20 == 0:
+                print(f'Training loss at epoch {e+1} step {i}: {float(avgloss / (i + 1))}')
 
         if (e + 1) % 10:
             model.save(e + 1)
