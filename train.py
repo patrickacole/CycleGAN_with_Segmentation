@@ -32,6 +32,8 @@ if __name__ == "__main__":
         datasetx = datasetx.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
         datasety = datasety.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
         for i, (data_x, data_y) in enumerate(zip(cycle(datasetx), datasety)):
+            data_x = tf.reshape(data_x, [-1,param.image_size,param.image_size,param.in_nc])
+            data_y = tf.reshape(data_y, [-1,param.image_size,param.image_size,param.in_nc])
             with tf.GradientTape(persistent=True) as tape:
                 loss = model.total_loss(data_y, data_x, param.lmbda)
                 loss_d1 = model.discriminator_loss(data_y, data_x, choice=1)
