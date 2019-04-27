@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
             avgloss += loss
 
-            if i%20 == 0:
+            if i%100 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(avgloss / (i + 1))}')
 
         if (e + 1) % 10:
