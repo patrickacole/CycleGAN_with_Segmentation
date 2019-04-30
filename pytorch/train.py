@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import numpy.linalg as la
 from itertools import cycle
+from torch.autograd import Variable
 
 from models.CycleGAN import *
 from utils.params import *
@@ -34,16 +35,24 @@ if __name__ == "__main__":
         print(f'Starting epoch {e+1}')
         epoch_start_time = time.time()
         avgloss = 0.0
-        for i, (data_x, data_y) in enumerate(zip(cycle(dataloaderx), dataloadery)):
+        if len(datasetx) < len(datasety):
+            packed = zip(cycle(dataloaderx), dataloadery)
+        else:
+            packed = zip(cycle(dataloadery), dataloaderx)
+        for i, (data_x, data_y) in enumerate(packed):
             data_x = data_x.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
             data_y = data_y.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
+            realA = Variable(data_x)
+            realB = Variable(data_y)
 
-            model.optimize_parameters(data_x, data_y) # needs to be implemented will just calculate gradients and losses and optimize
+            model.optimize_parameters(realA, realB) # needs to be implemented will just calculate gradients and losses and optimize
 
             avgloss += model.GANloss
 
             if i%100 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(avgloss / (i + 1))}')
+
+            del realA, realB
 
         epoch_end_time = time.time()
         print(f'Finishing epoch {e+1} in {epoch_end_time - epoch_start_time}s')
