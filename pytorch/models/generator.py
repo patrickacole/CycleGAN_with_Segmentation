@@ -15,11 +15,12 @@ class ResidualLayer(nn.Module):
                 nn.Conv2d(ngf, ngf, 3),
                 nn.ReLU(),
                 nn.ReflectionPad2d(1),
-                nn.Conv2d(ngf, ngf, 3)
+                nn.Conv2d(ngf, ngf, 3),
+                nn.InstanceNorm2d(ngf)
                 )
 
     def forward(self, x):
-        return self.model(x)
+        return x + self.model(x)
 
 class Generator(nn.Module):
     """
