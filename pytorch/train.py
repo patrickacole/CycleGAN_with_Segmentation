@@ -1,10 +1,9 @@
-from itertools import cycle
+import time
+import argparse
+import torch
 import numpy as np
 import numpy.linalg as la
-import time
-import tensorflow as tf
-from tensorflow.keras import layers
-import argparse
+from itertools import cycle
 
 from models.CycleGAN import *
 from utils.params import *
@@ -19,40 +18,34 @@ if __name__ == "__main__":
 
     # load data
     print("Loading data...")
-    datasetx, datasety = get_train_dataset(param)
+    datasetx, datasety = get_datasets(param, train=True)
 
     print("Creating model...")
-    model = CycleGAN(param)
-    optimizer = tf.optimizers.Adam(param.lr,beta_1=param.beta_1)
+    device = torch.device(("cpu","cuda:0")[torch.cuda.is_available()])
+    model = CycleGAN(param, device)
+    model.train() # needs to be implemented, will essentailly just set all networks inside to train
+
+    dataloaderx = torch.utils.data.DataLoader(datasetx, batch_size=param.batch_size,
+                                              shuffle=True, num_workers=param.num_workers)
+    dataloadery = torch.utils.data.DataLoader(datasety, batch_size=param.batch_size,
+                                              shuffle=True, num_workers=param.num_workers)
 
     for e in range(param.epochs):
         print(f'Starting epoch {e+1}')
         epoch_start_time = time.time()
         avgloss = 0.0
-        datasetx = datasetx.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
-        datasety = datasety.shuffle(buffer_size=param.buff_size).batch(param.batch_size)
-        for i, (data_x, data_y) in enumerate(zip(cycle(datasetx), datasety)):
-            data_x = tf.reshape(data_x, [-1,param.image_size,param.image_size,param.in_nc])
-            data_y = tf.reshape(data_y, [-1,param.image_size,param.image_size,param.in_nc])
-            with tf.GradientTape(persistent=True) as tape:
-                loss = model.total_loss(data_y, data_x, param.lmbda)
-                loss_d1 = model.discriminator_loss(data_y, data_x, choice=1)
-                loss_d2 = model.discriminator_loss(data_y, data_x, choice=2)
+        for i, (data_x, data_y) in enumerate(zip(cycle(dataloaderx), dataloadery)):
+            data_x = data_x.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
+            data_y = data_y.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
 
-            gradG1 = tape.gradient(loss, (model.G1).trainable_variables)
-            gradG2 = tape.gradient(loss, (model.G2).trainable_variables)
-            gradD1 = tape.gradient(loss_d1, (model.D1).trainable_variables)
-            gradD2 = tape.gradient(loss_d2, (model.D2).trainable_variables)
+            model.optimize_parameters(data_x, data_y) # needs to be implemented will just calculate gradients and losses and optimize
 
-            optimizer.apply_gradients(zip(gradG1, (model.G1).trainable_variables))
-            optimizer.apply_gradients(zip(gradG2, (model.G2).trainable_variables))
-            optimizer.apply_gradients(zip(gradD1, (model.D1).trainable_variables))
-            optimizer.apply_gradients(zip(gradD2, (model.D2).trainable_variables))
-
-            avgloss += loss
+            avgloss += model.GANloss
 
             if i%100 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(avgloss / (i + 1))}')
 
+        epoch_end_time = time.time()
+        print(f'Finishing epoch {e+1} in {epoch_end_time - epoch_start_time}s')
         if (e + 1) % 10:
             model.save(e + 1)

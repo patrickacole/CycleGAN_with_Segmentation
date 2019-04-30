@@ -85,6 +85,9 @@ class DatasetB(Dataset):
             sample = (2 * sample) - 1.0
             return path, sample
 
+def get_datasets(params, train=True):
+    return DatasetA(params, train), DatasetB(params, train)
+
 if __name__=="__main__":
     from argparse import Namespace
     params = {'image_size':256, 'train_path_a' : 'datasets/monet2photo/trainA', 
