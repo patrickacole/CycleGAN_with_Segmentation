@@ -11,17 +11,20 @@ from discriminator import *
 # from models.discriminator import *
 
 class CycleGAN():
-    def __init__(self, params):
+    def __init__(self, params, device):
         # G_AB: A -> B
         # G_BA: B -> A
-        self.G_AB = Generator(params.out_nc, params.ngf)
-        self.G_BA = Generator(params.out_nc, params.ngf)
-        self.D_A = Discriminator(params.in_nc, params.ndf, params.n_layers)
-        self.D_B = Discriminator(params.in_nc, params.ndf, params.n_layers)
+        self.G_AB = Generator(params.out_nc, params.ngf).to(device)
+        self.G_BA = Generator(params.out_nc, params.ngf).to(device)
+        self.D_A = Discriminator(params.in_nc, params.ndf, params.n_layers).to(device)
+        self.D_B = Discriminator(params.in_nc, params.ndf, params.n_layers).to(device)
 
         # discriminator loss function
-        self.D_Loss = nn.MSELoss()
-        self.L1_loss = nn.L1Loss()
+        self.D_Loss = nn.MSELoss().to(device)
+        self.L1_loss = nn.L1Loss().to(device)
+
+        # set device to be used later
+        self.device = device
 
         # optimizers
         self.optimizer_D_A = torch.optim.Adam(self.D_A.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
@@ -35,11 +38,11 @@ class CycleGAN():
     def gan_loss(self, realA, realB, choice='AB'):
         if choice == 'AB':
             db_fake = self.D_B(self.G_AB(realA))
-            valid = torch.ones(db_fake.shape)
+            valid = torch.ones(db_fake.shape).to(self.device)
             loss = self.D_Loss(db_fake, valid)
         else:
             da_fake = self.D_A(self.G_BA(realB))
-            valid = torch.ones(da_fake.shape)
+            valid = torch.ones(da_fake.shape).to(self.device)
             loss = self.D_Loss(da_fake, valid)
         return loss #tf.reduce_mean(loss)
 
@@ -53,17 +56,17 @@ class CycleGAN():
     def discriminator_loss(self, realA, realB, choice='A'):
         if choice == 'A':
             da_choice = self.D_A(self.G_BA(realB))
-            da_answer = torch.zeros(da_choice.shape)
+            da_answer = torch.zeros(da_choice.shape).to(self.device)
             loss_fake = self.D_Loss(da_choice, da_answer)
             da_choice = self.D_A(realA)
-            da_answer = torch.ones(da_choice.shape)
+            da_answer = torch.ones(da_choice.shape).to(self.device)
             loss_true = self.D_Loss(da_choice, da_answer)
         else:
             db_choice = self.D_B(self.G_AB(realA))
-            db_answer = torch.zeros(db_choice.shape)
+            db_answer = torch.zeros(db_choice.shape).to(self.device)
             loss_fake = self.D_Loss(db_choice, db_answer)
             db_choice = self.D_B(realB)
-            db_answer = torch.ones(db_choice.shape)
+            db_answer = torch.ones(db_choice.shape).to(self.device)
             loss_true = self.D_Loss(db_choice, db_answer)
         return (loss_true + loss_fake) / 2
 
@@ -179,10 +182,12 @@ if __name__ == "__main__":
             "lr":1e-4,
             "beta_1":0.5}
     args = Namespace(**args)
-    t1 = torch.zeros(4, 3, 64, 64)
-    t2 = torch.zeros(4, 3, 64, 64)
 
-    c = CycleGAN(args)
+    device = 'cpu'
+    t1 = torch.zeros(4, 3, 64, 64).to(device)
+    t2 = torch.zeros(4, 3, 64, 64).to(device)
+
+    c = CycleGAN(args, device)
     c.optimize_parameters(t1, t2, args)
     c.save(1, args)
     print(c(t1,t2)[0].shape)
