@@ -11,16 +11,15 @@ from models.CycleGAN import *
 from utils.params import *
 from utils.data_loader import *
 
-def save_outputs(outputs, filenames_in, filenames_out, out_directory):
+def save_outputs(outputs, filenames, out_directory, fake='A'):
     if not os.path.exists(out_directory):
         os.makedirs(out_directory)
     for i in range(outputs.shape[0]):
         image = outputs[i]
         image = 128.0 * (image + 1.0) # [-1,1] -> [0, 255]
         image = np.clip(image, 0, 255)
-        f_in, ext = os.path.splitext(os.path.basename(filenames_in[i]))
-        f_out, ext = os.path.splitext(os.path.basename(filenames_out[i]))
-        fname = os.path.join(out_directory, f"{f_in}_{f_out}{ext}")
+        f, ext = os.path.splitext(os.path.basename(filenames[i]))
+        fname = os.path.join(out_directory, f"fake{fake}_{f}{ext}")
         image = Image.fromarray(image.astype(np.uint8), 'RGB')
         image.save(fname)
 
@@ -46,20 +45,23 @@ if __name__ == "__main__":
     model.eval() # needs to be implemented, will essentailly just set all networks inside to eval
 
     print("Beginning to test...")
-    for i, (fx, data_x) in enumerate(dataloaderx):
-        for j, (fy, data_y) in enumerate(dataloadery):
-            data_x = data_x.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
-            data_y = data_y.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
-            realA = Variable(data_x)
-            realB = Variable(data_y)
+    if len(datasetx) < len(datasety):
+        packed = zip(cycle(dataloaderx), dataloadery)
+    else:
+        packed = zip(cycle(dataloadery), dataloaderx)
+    for i, (fx, data_x, fy, data_y) in enumerate(packed):
+        data_x = data_x.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+        data_y = data_y.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+        realA = Variable(data_x)
+        realB = Variable(data_y)
 
-            fakeB, fakeA = model(data_x, data_y)
-            fakeB = fakeB.data.cpu().numpy().transpose((0,2,3,1))
-            fakeA = fakeA.data.cpu().numpy().transpose((0,2,3,1))
+        fakeB, fakeA = model(data_x, data_y)
+        fakeB = fakeB.data.cpu().numpy().transpose((0,2,3,1))
+        fakeA = fakeA.data.cpu().numpy().transpose((0,2,3,1))
 
-            # Save fakeB as fx->fy.jpg
-            save_outputs(fakeB, fx, fy, param.out_directory)
-            # Save fakeA as fy->fx.jpg
-            save_outputs(fakeA, fy, fx, param.out_directory)
+        # Save fakeB as fakeB_fx.jpg
+        save_outputs(fakeB, fx, param.out_directory, fake='B')
+        # Save fakeA as fakeA_fy.jpg
+        save_outputs(fakeA, fy, param.out_directory, fake='A')
 
-            del realA, realB, fakeA, fakeB
+        del realA, realB, fakeA, fakeB

@@ -15,7 +15,8 @@
     "ndf":64,
     "n_layers":3,
     "epochs":20,
-    "lmbda":10,
+    "lmbda":10.0,
+    "lmbda_id":5.0,
     "lr":1e-4,
     "beta_1":0.5
 }

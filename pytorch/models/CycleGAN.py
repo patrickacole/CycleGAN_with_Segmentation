@@ -68,11 +68,16 @@ class CycleGAN():
     def cycle_loss(self, realA, realB, fakeA, fakeB):
         return (self.L1_loss(self.G_BA(fakeB), realA) + self.L1_loss(self.G_AB(fakeA), realB)) / 2
 
-    def total_loss(self, realA, realB, lmbda):
+    def identity_loss(self, realA, realB):
+        lossA = self.L1_loss(self.G_BA(realA), realA)
+        lossB = self.L1_loss(self.G_AB(realB), realB)
+        return (lossA + lossB) / 2
+
+    def total_loss(self, realA, realB, lmbda, lmbda_id):
         fakeB = self.G_AB(realA)
         fakeA = self.G_BA(realB)
         return (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
-               lmbda * self.cycle_loss(realA, realB, fakeA, fakeB)
+               lmbda * self.cycle_loss(realA, realB, fakeA, fakeB) + lmbda_id * self.identity_loss(realA, realB)
 
     def discriminator_loss(self, realA, realB, choice='A'):
         if choice == 'A':
@@ -94,7 +99,7 @@ class CycleGAN():
     def optimize_parameters(self, realA, realB, params):
         # Optimize Generators
         self.optimizer_G.zero_grad()
-        self.g_loss = self.total_loss(realA, realB, params.lmbda)
+        self.g_loss = self.total_loss(realA, realB, params.lmbda, params.lmbda_id)
         self.g_loss.backward()
         self.optimizer_G.step()
 
@@ -199,7 +204,8 @@ if __name__ == "__main__":
             "ngf":16,
             "ndf":16,
             "n_layers":1,
-            "lmbda":10,
+            "lmbda":10.0,
+            "lmbda_id":5.0,
             "lr":1e-4,
             "beta_1":0.5}
     args = Namespace(**args)
