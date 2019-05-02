@@ -5,6 +5,7 @@ import numpy as np
 import numpy.linalg as la
 import torch
 from torch.autograd import Variable
+from itertools import cycle
 from PIL import Image
 
 from models.CycleGAN import *
@@ -49,7 +50,9 @@ if __name__ == "__main__":
         packed = zip(cycle(dataloaderx), dataloadery)
     else:
         packed = zip(cycle(dataloadery), dataloaderx)
-    for i, (fx, data_x, fy, data_y) in enumerate(packed):
+    for i, (first, second) in enumerate(packed):
+        fx, data_x = first
+        fy, data_y = second
         data_x = data_x.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
         data_y = data_y.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
         realA = Variable(data_x)
