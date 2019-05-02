@@ -54,12 +54,10 @@ if __name__ == "__main__":
             realB = Variable(data_y)
 
             fakeB, fakeA = model(data_x, data_y)
-            fakeB = fakeB.data.cpu().numpy()
-            fakeA = fakeA.data.cpu().numpy()
+            fakeB = fakeB.data.cpu().numpy().transpose((0,2,3,1))
+            fakeA = fakeA.data.cpu().numpy().transpose((0,2,3,1))
 
             # Save fakeB as fx->fy.jpg
-            print(len(fx))
-            print(len(fy))
             save_outputs(fakeB, fx, fy, param.out_directory)
             # Save fakeA as fy->fx.jpg
             save_outputs(fakeA, fy, fx, param.out_directory)
