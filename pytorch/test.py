@@ -58,6 +58,8 @@ if __name__ == "__main__":
             fakeA = fakeA.data.cpu().numpy()
 
             # Save fakeB as fx->fy.jpg
+            print(len(fx))
+            print(len(fy))
             save_outputs(fakeB, fx, fy, param.out_directory)
             # Save fakeA as fy->fx.jpg
             save_outputs(fakeA, fy, fx, param.out_directory)

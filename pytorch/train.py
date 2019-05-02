@@ -48,8 +48,8 @@ if __name__ == "__main__":
             model.optimize_parameters(realA, realB, param)
 
             avgloss += model.g_loss
-
-            if i%100 == 0:
+            
+            if i%20 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(avgloss / (i + 1))}')
 
             del realA, realB
