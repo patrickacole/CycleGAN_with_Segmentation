@@ -35,23 +35,44 @@ class CycleGAN():
         # self.optimizer_G_AB = torch.optim.Adam(self.G_AB.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
         # self.optimizer_G_BA = torch.optim.Adam(self.G_BA.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
 
-    def gan_loss(self, realA, realB, choice='AB'):
+    # def gan_loss(self, realA, realB, choice='AB'):
+    #     if choice == 'AB':
+    #         db_fake = self.D_B(self.G_AB(realA))
+    #         valid = torch.ones(db_fake.shape).to(self.device)
+    #         loss = self.D_Loss(db_fake, valid)
+    #     else:
+    #         da_fake = self.D_A(self.G_BA(realB))
+    #         valid = torch.ones(da_fake.shape).to(self.device)
+    #         loss = self.D_Loss(da_fake, valid)
+    #     return loss #tf.reduce_mean(loss)
+
+    # def cycle_loss(self, realA, realB):
+    #     return (self.L1_loss(self.G_BA(self.G_AB(realA)), realA) + self.L1_loss(self.G_AB(self.G_BA(realB)), realB)) / 2
+
+    # def total_loss(self, realA, realB, lmbda):
+    #     return (self.gan_loss(realA, realB, choice='AB') + self.gan_loss(realA, realB, choice='BA')) / 2 + \
+    #            lmbda * self.cycle_loss(realA, realB)
+
+    # This stuff doesnt calculate extra stuff :-)
+    def gan_loss(self, fakeA, fakeB, choice='AB'):
         if choice == 'AB':
-            db_fake = self.D_B(self.G_AB(realA))
+            db_fake = self.D_B(fakeB)
             valid = torch.ones(db_fake.shape).to(self.device)
             loss = self.D_Loss(db_fake, valid)
         else:
-            da_fake = self.D_A(self.G_BA(realB))
+            da_fake = self.D_A(fakeA)
             valid = torch.ones(da_fake.shape).to(self.device)
             loss = self.D_Loss(da_fake, valid)
         return loss #tf.reduce_mean(loss)
 
-    def cycle_loss(self, realA, realB):
-        return (self.L1_loss(self.G_BA(self.G_AB(realA)), realA) + self.L1_loss(self.G_AB(self.G_BA(realB)), realB)) / 2
+    def cycle_loss(self, realA, realB, fakeA, fakeB):
+        return (self.L1_loss(self.G_BA(fakeB), realA) + self.L1_loss(self.G_AB(fakeA), realB)) / 2
 
     def total_loss(self, realA, realB, lmbda):
-        return (self.gan_loss(realA, realB, choice='AB') + self.gan_loss(realA, realB, choice='BA')) / 2 + \
-               lmbda * self.cycle_loss(realA, realB)
+        fakeB = self.G_AB(realA)
+        fakeA = self.G_BA(realB)
+        return (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
+               lmbda * self.cycle_loss(realA, realB, fakeA, fakeB)
 
     def discriminator_loss(self, realA, realB, choice='A'):
         if choice == 'A':
