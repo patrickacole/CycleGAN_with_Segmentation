@@ -42,14 +42,14 @@ if __name__ == "__main__":
     print("Creating model...")
     device = torch.device(("cpu","cuda:0")[torch.cuda.is_available()])
     model = CycleGAN(param, device)
-    model.load()
+    model.load(param)
     model.eval() # needs to be implemented, will essentailly just set all networks inside to eval
 
     print("Beginning to test...")
     for i, (fx, data_x) in enumerate(dataloaderx):
         for j, (fy, data_y) in enumerate(dataloadery):
-            data_x = data_x.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
-            data_y = data_y.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
+            data_x = data_x.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+            data_y = data_y.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
             realA = Variable(data_x)
             realB = Variable(data_y)
 

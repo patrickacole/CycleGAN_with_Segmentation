@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print("Creating model...")
     device = torch.device(("cpu","cuda:0")[torch.cuda.is_available()])
     model = CycleGAN(param, device)
-    model.train() # needs to be implemented, will essentailly just set all networks inside to train
+    model.train()
 
     dataloaderx = torch.utils.data.DataLoader(datasetx, batch_size=param.batch_size,
                                               shuffle=True, num_workers=param.num_workers)
@@ -40,14 +40,14 @@ if __name__ == "__main__":
         else:
             packed = zip(cycle(dataloadery), dataloaderx)
         for i, (data_x, data_y) in enumerate(packed):
-            data_x = data_x.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
-            data_y = data_y.view(-1,param.image_size,param.image_size,param.in_nc).to(device)
+            data_x = data_x.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+            data_y = data_y.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
             realA = Variable(data_x)
             realB = Variable(data_y)
 
-            model.optimize_parameters(realA, realB) # needs to be implemented will just calculate gradients and losses and optimize
+            model.optimize_parameters(realA, realB, param)
 
-            avgloss += model.GANloss
+            avgloss += model.g_loss
 
             if i%100 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(avgloss / (i + 1))}')
@@ -57,4 +57,4 @@ if __name__ == "__main__":
         epoch_end_time = time.time()
         print(f'Finishing epoch {e+1} in {epoch_end_time - epoch_start_time}s')
         if (e + 1) % 10:
-            model.save(e + 1)
+            model.save(e + 1, param)

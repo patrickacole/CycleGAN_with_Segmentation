@@ -5,10 +5,10 @@ import torch.nn as nn
 from torch.autograd import Variable
 from argparse import Namespace
 
-from generator import *
-from discriminator import *
-# from models.generator import *
-# from models.discriminator import *
+# from generator import *
+# from discriminator import *
+from models.generator import *
+from models.discriminator import *
 
 class CycleGAN():
     def __init__(self, params, device):
@@ -184,8 +184,8 @@ if __name__ == "__main__":
     args = Namespace(**args)
 
     device = 'cpu'
-    t1 = torch.zeros(4, 3, 64, 64).to(device)
-    t2 = torch.zeros(4, 3, 64, 64).to(device)
+    t1 = torch.zeros(4, 3, 128, 128).to(device)
+    t2 = torch.zeros(4, 3, 128, 128).to(device)
 
     c = CycleGAN(args, device)
     c.optimize_parameters(t1, t2, args)
