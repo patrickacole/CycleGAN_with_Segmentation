@@ -18,5 +18,6 @@
     "lmbda":10.0,
     "lmbda_id":5.0,
     "lr":1e-4,
-    "beta_1":0.5
+    "beta_1":0.5,
+    "mask":true
 }

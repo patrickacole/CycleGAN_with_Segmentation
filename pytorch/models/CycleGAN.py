@@ -32,27 +32,18 @@ class CycleGAN():
         self.optimizer_G  = torch.optim.Adam(itertools.chain(self.G_AB.parameters(), self.G_BA.parameters()), 
                                              lr=params.lr, betas=(params.beta_1, 0.999))
 
-        # self.optimizer_G_AB = torch.optim.Adam(self.G_AB.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
-        # self.optimizer_G_BA = torch.optim.Adam(self.G_BA.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
+        self.mask = params.mask
+        self.image_size = parasm.image_size
+        if self.mask:
+            config_file = "e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"
+            cfg.merge_from_file(config_file)
+            cfg.merge_from_list(["MODEL.MASK_ON", "True"])
+            self.mask_model = COCODemo(cfg, min_image_size=800, confidence_threshold=0.7, show_mask_heatmaps=True)
 
-    # def gan_loss(self, realA, realB, choice='AB'):
-    #     if choice == 'AB':
-    #         db_fake = self.D_B(self.G_AB(realA))
-    #         valid = torch.ones(db_fake.shape).to(self.device)
-    #         loss = self.D_Loss(db_fake, valid)
-    #     else:
-    #         da_fake = self.D_A(self.G_BA(realB))
-    #         valid = torch.ones(da_fake.shape).to(self.device)
-    #         loss = self.D_Loss(da_fake, valid)
-    #     return loss #tf.reduce_mean(loss)
-
-    # def cycle_loss(self, realA, realB):
-    #     return (self.L1_loss(self.G_BA(self.G_AB(realA)), realA) + self.L1_loss(self.G_AB(self.G_BA(realB)), realB)) / 2
-
-    # def total_loss(self, realA, realB, lmbda):
-    #     return (self.gan_loss(realA, realB, choice='AB') + self.gan_loss(realA, realB, choice='BA')) / 2 + \
-    #            lmbda * self.cycle_loss(realA, realB)
-
+    def get_mask(self, input):
+        x = input.view(-1, 3, image_size, image_size)[:,[2,1,0],:,:]
+        return torch.stack([self.mask_model(x[i, :, :, :]) for i in range(x.shape[0])])
+        
     # This stuff doesnt calculate extra stuff :-)
     def gan_loss(self, fakeA, fakeB, choice='AB'):
         if choice == 'AB':
@@ -65,8 +56,11 @@ class CycleGAN():
             loss = self.D_Loss(da_fake, valid)
         return loss #tf.reduce_mean(loss)
 
-    def cycle_loss(self, realA, realB, fakeA, fakeB):
-        return (self.L1_loss(self.G_BA(fakeB), realA) + self.L1_loss(self.G_AB(fakeA), realB)) / 2
+    def cycle_loss(self, realA, realB, fakeA, fakeB, maskA=None, maskB=None):
+        if self.mask:
+            return (self.L1_loss(self.G_BA(fakeB, maskA), realA) + self.L1_loss(self.G_AB(fakeA, maskB), realB)) / 2
+        else:
+            return (self.L1_loss(self.G_BA(fakeB), realA) + self.L1_loss(self.G_AB(fakeA), realB)) / 2
 
     def identity_loss(self, realA, realB):
         lossA = self.L1_loss(self.G_BA(realA), realA)
@@ -74,10 +68,18 @@ class CycleGAN():
         return (lossA + lossB) / 2
 
     def total_loss(self, realA, realB, lmbda, lmbda_id):
-        fakeB = self.G_AB(realA)
-        fakeA = self.G_BA(realB)
-        return (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
-               lmbda * self.cycle_loss(realA, realB, fakeA, fakeB) + lmbda_id * self.identity_loss(realA, realB)
+        if self.mask:
+            maskA = self.get_mask(realA)
+            maskB = self.get_mask(realB)
+            fakeB = self.G_AB(realA, maskA)
+            fakeA = self.G_BA(realB, maskB)
+            return (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
+                   lmbda * self.cycle_loss(realA, realB, fakeA, fakeB, maskA=maskA, maskB=maskB) + lmbda_id * self.identity_loss(realA, realB)
+        else:
+            fakeB = self.G_AB(realA)
+            fakeA = self.G_BA(realB)
+            return (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
+                   lmbda * self.cycle_loss(realA, realB, fakeA, fakeB) + lmbda_id * self.identity_loss(realA, realB)
 
     def discriminator_loss(self, realA, realB, choice='A'):
         if choice == 'A':

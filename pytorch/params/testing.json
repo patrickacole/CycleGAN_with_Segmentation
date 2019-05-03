@@ -16,5 +16,6 @@
     "lmbda":10,
     "lr":1e-4,
     "beta_1":0.5,
-    "optimizer":false
+    "optimizer":false,
+    "mask":true
 }

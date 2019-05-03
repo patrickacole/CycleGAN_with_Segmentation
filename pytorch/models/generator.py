@@ -63,9 +63,13 @@ class Generator(nn.Module):
                 ]
         self.model = nn.Sequential(*d)
 
-    def forward(self, inputs):
-        "Assumes inputs are (N, C, H, W)"
-        return self.model(inputs)
+    def forward(self, inputs, mask=None):
+        "Assumes inputs are (N, C, H, W), mask is N, H, W"
+        if mask is None:
+            return self.model(inputs)
+        else:
+            return self.model(inputs) * mask[:, np.newaxis, :, :] + (1-mask[:, np.newaxis, : ,:]) * inputs
+
 
         
 
