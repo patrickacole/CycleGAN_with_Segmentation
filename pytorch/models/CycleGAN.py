@@ -10,6 +10,17 @@ from argparse import Namespace
 from models.generator import *
 from models.discriminator import *
 
+class LambdaLR():
+    def __init__(self, n_epochs, offset, decay_start_epoch):
+        assert ((n_epochs - decay_start_epoch) >
+                0), "Decay must start before the training session ends!"
+        self.n_epochs = n_epochs
+        self.offset = offset
+        self.decay_start_epoch = decay_start_epoch
+
+    def step(self, epoch):
+        return 1.0 - max(0, epoch + self.offset - self.decay_start_epoch)/(self.n_epochs - self.decay_start_epoch)
+
 class CycleGAN():
     def __init__(self, params, device):
         # G_AB: A -> B
@@ -31,7 +42,8 @@ class CycleGAN():
         self.optimizer_D_B = torch.optim.Adam(self.D_B.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
         self.optimizer_G  = torch.optim.Adam(itertools.chain(self.G_AB.parameters(), self.G_BA.parameters()), 
                                              lr=params.lr, betas=(params.beta_1, 0.999))
-
+        
+        #masks
         self.mask = params.mask
         self.image_size = parasm.image_size
         if self.mask:
@@ -43,7 +55,7 @@ class CycleGAN():
     def get_mask(self, input):
         x = input.view(-1, 3, image_size, image_size)[:,[2,1,0],:,:]
         return torch.stack([self.mask_model(x[i, :, :, :]) for i in range(x.shape[0])])
-        
+
     # This stuff doesnt calculate extra stuff :-)
     def gan_loss(self, fakeA, fakeB, choice='AB'):
         if choice == 'AB':
@@ -98,7 +110,7 @@ class CycleGAN():
             loss_true = self.D_Loss(db_choice, db_answer)
         return (loss_true + loss_fake) / 2
 
-    def optimize_parameters(self, realA, realB, params):
+    def optimize_parameters(self, e, realA, realB, params):
         # Optimize Generators
         self.optimizer_G.zero_grad()
         self.g_loss = self.total_loss(realA, realB, params.lmbda, params.lmbda_id)
@@ -116,6 +128,12 @@ class CycleGAN():
         self.d_b_loss = self.discriminator_loss(realA, realB, choice='B')
         self.d_b_loss.backward()
         self.optimizer_D_B.step()
+
+        if e > self.last_e:
+            self.last_e = e
+            self.D_A_scheduler.step()
+            self.D_B_scheduler.step()
+            self.G_scheduler.step()
 
     def save(self, epoch, params):
         if not os.path.exists(params.checkpoint_dir):
@@ -208,6 +226,7 @@ if __name__ == "__main__":
             "n_layers":1,
             "lmbda":10.0,
             "lmbda_id":5.0,
+            "epochs":200,
             "lr":1e-4,
             "beta_1":0.5}
     args = Namespace(**args)
