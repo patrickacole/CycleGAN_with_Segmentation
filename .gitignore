@@ -6,5 +6,4 @@ tcl/
 *.swp
 __pycache__/
 datasets/
-checkpoint/
 .DS_Store

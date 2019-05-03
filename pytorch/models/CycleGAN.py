@@ -43,6 +43,7 @@ class CycleGAN():
         self.optimizer_G  = torch.optim.Adam(itertools.chain(self.G_AB.parameters(), self.G_BA.parameters()), 
                                              lr=params.lr, betas=(params.beta_1, 0.999))
 
+        self.last_e = -1
         self.D_A_scheduler = torch.optim.lr_scheduler.LambdaLR(
             self.optimizer_D_A, lr_lambda=LambdaLR(params.epochs, 0, 100).step)
         self.D_B_scheduler = torch.optim.lr_scheduler.LambdaLR(
@@ -113,7 +114,7 @@ class CycleGAN():
             loss_true = self.D_Loss(db_choice, db_answer)
         return (loss_true + loss_fake) / 2
 
-    def optimize_parameters(self, realA, realB, params):
+    def optimize_parameters(self, e, realA, realB, params):
         # Optimize Generators
         self.optimizer_G.zero_grad()
         self.g_loss = self.total_loss(realA, realB, params.lmbda, params.lmbda_id)
@@ -132,9 +133,11 @@ class CycleGAN():
         self.d_b_loss.backward()
         self.optimizer_D_B.step()
 
-        self.D_A_scheduler.step()
-        self.D_B_scheduler.step()
-        self.G_scheduler.step()
+        if e > self.last_e:
+            self.last_e = e
+            self.D_A_scheduler.step()
+            self.D_B_scheduler.step()
+            self.G_scheduler.step()
 
     def save(self, epoch, params):
         if not os.path.exists(params.checkpoint_dir):
