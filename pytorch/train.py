@@ -18,7 +18,7 @@ if __name__ == "__main__":
     param = Params(args.params_path)
 
     # load data
-    print("Loading data...")
+    print(f"Loading dataset {param.train_path_a.split('/')[1]}...")
     datasetx, datasety = get_datasets(param, train=True)
 
     print("Creating model...")
@@ -32,7 +32,7 @@ if __name__ == "__main__":
                                               shuffle=True, num_workers=param.num_workers)
 
     for e in range(param.epochs):
-        print(f'Starting epoch {e+1}')
+        print(f'Starting epoch [{e+1} / {param.epochs}]')
         epoch_start_time = time.time()
         avgloss = 0.0
         if len(datasetx) < len(datasety):
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             realA = Variable(data_x)
             realB = Variable(data_y)
 
-            model.optimize_parameters(realA, realB, param)
+            model.optimize_parameters(e, realA, realB, param)
 
             avgloss += model.g_loss
             
@@ -55,6 +55,5 @@ if __name__ == "__main__":
             del realA, realB
 
         epoch_end_time = time.time()
-        print(f'Finishing epoch {e+1} in {epoch_end_time - epoch_start_time}s')
-        if (e + 1) % 10:
-            model.save(e + 1, param)
+        print(f'Finishing epoch [{e+1} / {param.epochs}] in {epoch_end_time - epoch_start_time}s')
+        model.save(e + 1, param)
