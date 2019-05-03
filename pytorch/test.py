@@ -13,14 +13,15 @@ from utils.params import *
 from utils.data_loader import *
 
 def save_outputs(outputs, filenames, out_directory, fake='A'):
-    if not os.path.exists(out_directory):
-        os.makedirs(out_directory)
+    out_dir = os.path.join(out_directory, f'fake{fake}/')
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
     for i in range(outputs.shape[0]):
         image = outputs[i]
         image = 128.0 * (image + 1.0) # [-1,1] -> [0, 255]
         image = np.clip(image, 0, 255)
-        f, ext = os.path.splitext(os.path.basename(filenames[i]))
-        fname = os.path.join(out_directory, f"fake{fake}_{f}{ext}")
+        f = os.path.basename(filenames[i])
+        fname = os.path.join(out_dir, f)
         image = Image.fromarray(image.astype(np.uint8), 'RGB')
         image.save(fname)
 

@@ -10,6 +10,17 @@ from argparse import Namespace
 from models.generator import *
 from models.discriminator import *
 
+class LambdaLR():
+    def __init__(self, n_epochs, offset, decay_start_epoch):
+        assert ((n_epochs - decay_start_epoch) >
+                0), "Decay must start before the training session ends!"
+        self.n_epochs = n_epochs
+        self.offset = offset
+        self.decay_start_epoch = decay_start_epoch
+
+    def step(self, epoch):
+        return 1.0 - max(0, epoch + self.offset - self.decay_start_epoch)/(self.n_epochs - self.decay_start_epoch)
+
 class CycleGAN():
     def __init__(self, params, device):
         # G_AB: A -> B
@@ -32,6 +43,12 @@ class CycleGAN():
         self.optimizer_G  = torch.optim.Adam(itertools.chain(self.G_AB.parameters(), self.G_BA.parameters()), 
                                              lr=params.lr, betas=(params.beta_1, 0.999))
 
+        self.D_A_scheduler = torch.optim.lr_scheduler.LambdaLR(
+            self.optimizer_D_A, lr_lambda=LambdaLR(params.epochs, 0, 100).step)
+        self.D_B_scheduler = torch.optim.lr_scheduler.LambdaLR(
+            self.optimizer_D_B, lr_lambda=LambdaLR(params.epochs, 0, 100).step)
+        self.G_scheduler = torch.optim.lr_scheduler.LambdaLR(
+            self.optimizer_G, lr_lambda=LambdaLR(params.epochs, 0, 100).step)
         # self.optimizer_G_AB = torch.optim.Adam(self.G_AB.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
         # self.optimizer_G_BA = torch.optim.Adam(self.G_BA.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
 
@@ -114,6 +131,10 @@ class CycleGAN():
         self.d_b_loss = self.discriminator_loss(realA, realB, choice='B')
         self.d_b_loss.backward()
         self.optimizer_D_B.step()
+
+        self.D_A_scheduler.step()
+        self.D_B_scheduler.step()
+        self.G_scheduler.step()
 
     def save(self, epoch, params):
         if not os.path.exists(params.checkpoint_dir):
@@ -206,6 +227,7 @@ if __name__ == "__main__":
             "n_layers":1,
             "lmbda":10.0,
             "lmbda_id":5.0,
+            "epochs":200,
             "lr":1e-4,
             "beta_1":0.5}
     args = Namespace(**args)
