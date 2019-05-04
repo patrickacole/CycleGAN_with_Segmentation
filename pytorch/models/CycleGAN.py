@@ -85,13 +85,18 @@ class CycleGAN():
             maskB = self.get_mask(realB)
             fakeB = self.G_AB(realA, maskA)
             fakeA = self.G_BA(realB, maskB)
-            return (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
-                   lmbda * self.cycle_loss(realA, realB, fakeA, fakeB, maskA=maskA, maskB=maskB) + lmbda_id * self.identity_loss(realA, realB)
+            loss  = (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
+                    lmbda * self.cycle_loss(realA, realB, fakeA, fakeB, maskA=maskA, maskB=maskB)
         else:
             fakeB = self.G_AB(realA)
             fakeA = self.G_BA(realB)
-            return (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
-                   lmbda * self.cycle_loss(realA, realB, fakeA, fakeB) + lmbda_id * self.identity_loss(realA, realB)
+            loss  = (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
+                    lmbda * self.cycle_loss(realA, realB, fakeA, fakeB)
+
+        if lmbda_id > 0.0:
+            loss += lmbda_id * self.identity_loss(realA, realB)
+
+        return loss
 
     def discriminator_loss(self, realA, realB, choice='A'):
         if choice == 'A':
