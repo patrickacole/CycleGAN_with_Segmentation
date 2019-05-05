@@ -9,6 +9,9 @@ from argparse import Namespace
 # from discriminator import *
 from models.generator import *
 from models.discriminator import *
+from maskrcnn_benchmark.config import cfg
+from models.predictor import COCODemo
+import sys
 
 class LambdaLR():
     def __init__(self, n_epochs, offset, decay_start_epoch):
@@ -23,6 +26,7 @@ class LambdaLR():
 
 class CycleGAN():
     def __init__(self, params, device):
+        self.last_e = 0
         # G_AB: A -> B
         # G_BA: B -> A
         self.G_AB = Generator(params.out_nc, params.ngf).to(device)
@@ -45,16 +49,21 @@ class CycleGAN():
         
         #masks
         self.mask = params.mask
-        self.image_size = parasm.image_size
+        self.image_size = params.image_size
         if self.mask:
             config_file = "e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"
             cfg.merge_from_file(config_file)
             cfg.merge_from_list(["MODEL.MASK_ON", "True"])
+            cfg.merge_from_list(["MODEL.DEVICE", ("cpu","cuda:0")[torch.cuda.is_available()]])
             self.mask_model = COCODemo(cfg, min_image_size=800, confidence_threshold=0.7, show_mask_heatmaps=True)
 
     def get_mask(self, input):
-        x = input.view(-1, 3, image_size, image_size)[:,[2,1,0],:,:]
-        return torch.stack([self.mask_model(x[i, :, :, :]) for i in range(x.shape[0])])
+        x = input.view(-1, 3, self.image_size, self.image_size)[:,[2,1,0],:,:] #map from RGB to BGR
+        x = (x.permute(0,2,3,1) + 1.0)/2.0*255 #undo normalization, go from (N,C,H,W) -> (N,H,W,C), go to 0-255
+        msk = torch.stack([self.mask_model(x[i, :, :, :]) for i in range(x.shape[0])])
+        #x = input.view(-1, 3, self.image_size, self.image_size)
+        #return torch.randint(0, 2, (x.shape[0], self.image_size, self.image_size)).to(self.device).float()
+        return msk
 
     # This stuff doesnt calculate extra stuff :-)
     def gan_loss(self, fakeA, fakeB, choice='AB'):
