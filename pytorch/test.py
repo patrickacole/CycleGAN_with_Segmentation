@@ -33,7 +33,7 @@ if __name__ == "__main__":
     param = Params(args.params_path)
 
     # load data
-    print("Loading data...")
+    print(f"Loading dataset {param.test_path_a.split('/')[1]}...")
     datasetx, datasety = get_datasets(param, train=False)
     dataloaderx = torch.utils.data.DataLoader(datasetx, batch_size=param.batch_size,
                                               shuffle=False, num_workers=param.num_workers)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         realA = Variable(realA)
         realB = Variable(realB)
 
-        fakeB, fakeA = model(data_x, data_y)
+        fakeB, fakeA = model(realA, realB, maskA, maskB)
         fakeB = fakeB.data.cpu().numpy().transpose((0,2,3,1))
         fakeA = fakeA.data.cpu().numpy().transpose((0,2,3,1))
 
