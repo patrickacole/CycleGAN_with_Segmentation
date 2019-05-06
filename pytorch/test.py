@@ -51,21 +51,21 @@ if __name__ == "__main__":
         packed = zip(cycle(dataloaderx), dataloadery)
     else:
         packed = zip(cycle(dataloadery), dataloaderx)
-    for i, (first, second) in enumerate(packed):
-        fx, data_x = first
-        fy, data_y = second
-        data_x = data_x.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
-        data_y = data_y.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
-        realA = Variable(data_x)
-        realB = Variable(data_y)
+    for i, (data_x, data_y) in enumerate(packed):
+        fA, realA, maskA = data_x
+        fB, realB, maskB = data_y
+        realA = realA.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+        realB = realB.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+        realA = Variable(realA)
+        realB = Variable(realB)
 
         fakeB, fakeA = model(data_x, data_y)
         fakeB = fakeB.data.cpu().numpy().transpose((0,2,3,1))
         fakeA = fakeA.data.cpu().numpy().transpose((0,2,3,1))
 
         # Save fakeB as fakeB_fx.jpg
-        save_outputs(fakeB, fx, param.out_directory, fake='B')
+        save_outputs(fakeB, fA, param.out_directory, fake='B')
         # Save fakeA as fakeA_fy.jpg
-        save_outputs(fakeA, fy, param.out_directory, fake='A')
+        save_outputs(fakeA, fB, param.out_directory, fake='A')
 
         del realA, realB, fakeA, fakeB

@@ -234,8 +234,8 @@ class CycleGAN():
         self.D_A.eval()
         self.D_B.eval()
 
-    def __call__(self, x, y):
-        return self.G_AB(x), self.G_BA(y)
+    def __call__(self, x, y, maskx=None, masky=None):
+        return self.G_AB(x, maskx), self.G_BA(y, masky)
 
 if __name__ == "__main__":
     from argparse import Namespace

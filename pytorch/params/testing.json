@@ -2,6 +2,8 @@
     "d_path":"dataset",
     "test_path_a":"datasets/monet2photo/testA",
     "test_path_b":"datasets/monet2photo/testB",
+    "train_mask_a":"./datasets/horse2zebra/testAmask",
+    "train_mask_b":"./datasets/horse2zebra/testBmask",
     "checkpoint_dir":"checkpoint/monet2photo/",
     "out_directory":"output/monet2photo/",
     "image_size":128,
