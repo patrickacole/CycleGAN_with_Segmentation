@@ -1,5 +1,6 @@
 import os
 import torch
+import numpy as np
 from torch.utils.data import Dataset
 from torchvision import transforms, datasets
 from PIL import Image
@@ -37,9 +38,39 @@ class ImageFolder():
             return sample
         return path, sample
 
+class MaskFolder():
+    def __init__(self, root, size=None):
+        self.root = root
+        self.size = size
+        files = os.listdir(self.root)
+        self.samples = [os.path.join(self.root, f) for f in files]
+        self.samples.sort()
+
+    def loader(self, path):
+        return np.load(path)
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        """
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (sample, target) where target is class_index of the target class.
+        """
+        path = self.samples[index]
+        sample = self.loader(path)
+        if self.size:
+            sample = Image.fromarray(sample, mode='L')
+            sample = np.array(sample.resize((self.size,self.size)))
+        sample = sample[None,:,:]
+        return torch.from_numpy(sample)
+
 class DatasetA(Dataset):
-    def __init__(self, params, train=True):
+    def __init__(self, params, train=True, mask=False):
         self.train = train
+        self.mask = mask
         t = transforms.Compose([ transforms.Resize(params.image_size),
                                   transforms.ToTensor() ])
         if self.train:
@@ -47,6 +78,10 @@ class DatasetA(Dataset):
         else:
             self.data = ImageFolder(root=params.test_path_a, transform=t, train=False)
 
+        self.masks = None
+        if self.mask:
+            self.masks = MaskFolder(root=params.train_mask_a, params.image_size)
+
     def __len__(self):
         return len(self.data)
 
@@ -55,15 +90,22 @@ class DatasetA(Dataset):
         if self.train:
             sample = self.data[idx]
             sample = (2 * sample) - 1.0
-            return sample
+            if self.mask:
+                return (sample, self.masks[idx])
+            else:
+                return (sample, None)
         else:
             path, sample = self.data[idx]
             sample = (2 * sample) - 1.0
-            return path, sample
+            if self.mask:
+                return (path, sample, self.masks[idx])
+            else:
+                return (path, sample, None)
 
 class DatasetB(Dataset):
-    def __init__(self, params, train=True):
+    def __init__(self, params, train=True, mask=False):
         self.train = train
+        self.mask = mask
         t = transforms.Compose([ transforms.Resize(params.image_size),
                                   transforms.ToTensor() ])
         if self.train:
@@ -71,6 +113,10 @@ class DatasetB(Dataset):
         else:
             self.data = ImageFolder(root=params.test_path_b, transform=t, train=False)
 
+        self.masks = None
+        if self.mask:
+            self.masks = MaskFolder(root=params.train_mask_b, params.image_size)
+
     def __len__(self):
         return len(self.data)
 
@@ -79,11 +125,17 @@ class DatasetB(Dataset):
         if self.train:
             sample = self.data[idx]
             sample = (2 * sample) - 1.0
-            return sample
+            if self.mask:
+                return (sample, self.masks[idx])
+            else:
+                return (sample, None)
         else:
             path, sample = self.data[idx]
             sample = (2 * sample) - 1.0
-            return path, sample
+            if self.mask:
+                return (path, sample, self.masks[idx])
+            else:
+                return (path, sample, None)
 
 def get_datasets(params, train=True):
     return DatasetA(params, train), DatasetB(params, train)

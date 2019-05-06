@@ -40,12 +40,14 @@ if __name__ == "__main__":
         else:
             packed = zip(cycle(dataloadery), dataloaderx)
         for i, (data_x, data_y) in enumerate(packed):
-            data_x = data_x.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
-            data_y = data_y.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
-            realA = Variable(data_x)
-            realB = Variable(data_y)
+            realA, maskA = data_x
+            realB, maskB = data_y
+            realA = realA.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+            realB = realB.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
+            realA = Variable(realA)
+            realB = Variable(realB)
 
-            model.optimize_parameters(e, realA, realB, param)
+            model.optimize_parameters(e, realA, realB, param, maskA, maskB)
 
             avgloss += model.g_loss
             

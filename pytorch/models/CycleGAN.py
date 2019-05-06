@@ -49,21 +49,21 @@ class CycleGAN():
         
         #masks
         self.mask = params.mask
-        self.image_size = params.image_size
-        if self.mask:
-            config_file = "e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"
-            cfg.merge_from_file(config_file)
-            cfg.merge_from_list(["MODEL.MASK_ON", "True"])
-            cfg.merge_from_list(["MODEL.DEVICE", ("cpu","cuda:0")[torch.cuda.is_available()]])
-            self.mask_model = COCODemo(cfg, min_image_size=800, confidence_threshold=0.7, show_mask_heatmaps=True)
+        # self.image_size = params.image_size
+        # if self.mask:
+        #     config_file = "e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"
+        #     cfg.merge_from_file(config_file)
+        #     cfg.merge_from_list(["MODEL.MASK_ON", "True"])
+        #     cfg.merge_from_list(["MODEL.DEVICE", ("cpu","cuda:0")[torch.cuda.is_available()]])
+        #     self.mask_model = COCODemo(cfg, min_image_size=800, confidence_threshold=0.7, show_mask_heatmaps=True)
 
-    def get_mask(self, input):
-        x = input.view(-1, 3, self.image_size, self.image_size)[:,[2,1,0],:,:] #map from RGB to BGR
-        x = (x.permute(0,2,3,1) + 1.0)/2.0*255 #undo normalization, go from (N,C,H,W) -> (N,H,W,C), go to 0-255
-        msk = torch.stack([self.mask_model(x[i, :, :, :]) for i in range(x.shape[0])])
-        #x = input.view(-1, 3, self.image_size, self.image_size)
-        #return torch.randint(0, 2, (x.shape[0], self.image_size, self.image_size)).to(self.device).float()
-        return msk
+    # def get_mask(self, input):
+    #     x = input.view(-1, 3, self.image_size, self.image_size)[:,[2,1,0],:,:] #map from RGB to BGR
+    #     x = (x.permute(0,2,3,1) + 1.0)/2.0*255 #undo normalization, go from (N,C,H,W) -> (N,H,W,C), go to 0-255
+    #     msk = torch.stack([self.mask_model(x[i, :, :, :]) for i in range(x.shape[0])])
+    #     #x = input.view(-1, 3, self.image_size, self.image_size)
+    #     #return torch.randint(0, 2, (x.shape[0], self.image_size, self.image_size)).to(self.device).float()
+    #     return msk
 
     # This stuff doesnt calculate extra stuff :-)
     def gan_loss(self, fakeA, fakeB, choice='AB'):
@@ -88,10 +88,10 @@ class CycleGAN():
         lossB = self.L1_loss(self.G_AB(realB), realB)
         return (lossA + lossB) / 2
 
-    def total_loss(self, realA, realB, lmbda, lmbda_id):
+    def total_loss(self, realA, realB, lmbda, lmbda_id, maskA=None, maskB=None):
         if self.mask:
-            maskA = self.get_mask(realA)
-            maskB = self.get_mask(realB)
+            # maskA = self.get_mask(realA)
+            # maskB = self.get_mask(realB)
             fakeB = self.G_AB(realA, maskA)
             fakeA = self.G_BA(realB, maskB)
             loss  = (self.gan_loss(fakeA, fakeB, choice='AB') + self.gan_loss(fakeA, fakeB, choice='BA')) / 2 + \
@@ -124,10 +124,10 @@ class CycleGAN():
             loss_true = self.D_Loss(db_choice, db_answer)
         return (loss_true + loss_fake) / 2
 
-    def optimize_parameters(self, e, realA, realB, params):
+    def optimize_parameters(self, e, realA, realB, params, maskA=None, maskB=None):
         # Optimize Generators
         self.optimizer_G.zero_grad()
-        self.g_loss = self.total_loss(realA, realB, params.lmbda, params.lmbda_id)
+        self.g_loss = self.total_loss(realA, realB, params.lmbda, params.lmbda_id, maskA, maskB)
         self.g_loss.backward()
         self.optimizer_G.step()
 
