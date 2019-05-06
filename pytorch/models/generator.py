@@ -68,11 +68,10 @@ class Generator(nn.Module):
         if mask is None:
             return self.model(inputs)
         else:
-            #return self.model(inputs) * mask[:, np.newaxis, :, :] + (1-mask[:, np.newaxis, : ,:]) * inputs
-            return self.model(inputs) * mask + (1-mask) * inputs
-
-
-        
+            # return self.model(inputs) * mask[:, np.newaxis, :, :] + (1-mask[:, np.newaxis, : ,:]) * inputs
+            # return self.model(inputs) * mask + (1-mask) * inputs
+            output = self.model(inputs)
+            return ((output * mask + (1 - mask) * inputs) + output) / 2
 
 if __name__=="__main__":
     model = Generator(3, 1)
