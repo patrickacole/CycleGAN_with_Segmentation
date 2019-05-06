@@ -58,6 +58,9 @@ if __name__ == "__main__":
         realB = realB.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
         realA = Variable(realA)
         realB = Variable(realB)
+        if param.mask:
+            maskA = maskA.to(device)
+            maskB = maskB.to(device)
 
         fakeB, fakeA = model(realA, realB, maskA, maskB)
         fakeB = fakeB.data.cpu().numpy().transpose((0,2,3,1))
