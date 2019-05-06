@@ -40,12 +40,17 @@ if __name__ == "__main__":
         else:
             packed = zip(cycle(dataloadery), dataloaderx)
         for i, (data_x, data_y) in enumerate(packed):
+            # print(data_x[0].shape)
+            # print(data_x[1].shape)
             realA, maskA = data_x
             realB, maskB = data_y
             realA = realA.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
             realB = realB.view(-1,param.in_nc,param.image_size,param.image_size).to(device)
             realA = Variable(realA)
             realB = Variable(realB)
+            if param.mask:
+                maskA = maskA.to(device, torch.float)
+                maskB = maskB.to(device, torch.float)
 
             model.optimize_parameters(e, realA, realB, param, maskA, maskB)
 

@@ -9,8 +9,8 @@ from argparse import Namespace
 # from discriminator import *
 from models.generator import *
 from models.discriminator import *
-from maskrcnn_benchmark.config import cfg
-from models.predictor import COCODemo
+#from maskrcnn_benchmark.config import cfg
+#from models.predictor import COCODemo
 import sys
 
 class LambdaLR():
@@ -46,7 +46,14 @@ class CycleGAN():
         self.optimizer_D_B = torch.optim.Adam(self.D_B.parameters(), lr = params.lr, betas=(params.beta_1, 0.999))
         self.optimizer_G  = torch.optim.Adam(itertools.chain(self.G_AB.parameters(), self.G_BA.parameters()), 
                                              lr=params.lr, betas=(params.beta_1, 0.999))
-        
+       
+        # schedulers
+        self.D_A_scheduler = torch.optim.lr_scheduler.LambdaLR(
+                                 self.optimizer_D_A, lr_lambda=LambdaLR(params.epochs, 0, 100).step)
+        self.D_B_scheduler = torch.optim.lr_scheduler.LambdaLR(
+                                 self.optimizer_D_B, lr_lambda=LambdaLR(params.epochs, 0, 100).step)
+        self.G_scheduler = torch.optim.lr_scheduler.LambdaLR(
+                                 self.optimizer_G, lr_lambda=LambdaLR(params.epochs, 0, 100).step)
         #masks
         self.mask = params.mask
         # self.image_size = params.image_size

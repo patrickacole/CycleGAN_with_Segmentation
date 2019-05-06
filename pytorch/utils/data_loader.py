@@ -65,7 +65,7 @@ class MaskFolder():
             sample = Image.fromarray(sample, mode='L')
             sample = np.array(sample.resize((self.size,self.size)))
         sample = sample[None,:,:]
-        return torch.from_numpy(sample)
+        return torch.from_numpy(sample.astype(np.float32))
 
 class DatasetA(Dataset):
     def __init__(self, params, train=True, mask=False):
@@ -80,7 +80,7 @@ class DatasetA(Dataset):
 
         self.masks = None
         if self.mask:
-            self.masks = MaskFolder(root=params.train_mask_a, params.image_size)
+            self.masks = MaskFolder(root=params.train_mask_a, size=params.image_size)
 
     def __len__(self):
         return len(self.data)
@@ -91,16 +91,16 @@ class DatasetA(Dataset):
             sample = self.data[idx]
             sample = (2 * sample) - 1.0
             if self.mask:
-                return (sample, self.masks[idx])
+                return [sample, self.masks[idx]]
             else:
-                return (sample, None)
+                return [sample, None]
         else:
             path, sample = self.data[idx]
             sample = (2 * sample) - 1.0
             if self.mask:
-                return (path, sample, self.masks[idx])
+                return [path, sample, self.masks[idx]]
             else:
-                return (path, sample, None)
+                return [path, sample, None]
 
 class DatasetB(Dataset):
     def __init__(self, params, train=True, mask=False):
@@ -115,7 +115,7 @@ class DatasetB(Dataset):
 
         self.masks = None
         if self.mask:
-            self.masks = MaskFolder(root=params.train_mask_b, params.image_size)
+            self.masks = MaskFolder(root=params.train_mask_b, size=params.image_size)
 
     def __len__(self):
         return len(self.data)
@@ -126,19 +126,19 @@ class DatasetB(Dataset):
             sample = self.data[idx]
             sample = (2 * sample) - 1.0
             if self.mask:
-                return (sample, self.masks[idx])
+                return [sample, self.masks[idx]]
             else:
-                return (sample, None)
+                return [sample, None]
         else:
             path, sample = self.data[idx]
             sample = (2 * sample) - 1.0
             if self.mask:
-                return (path, sample, self.masks[idx])
+                return [path, sample, self.masks[idx]]
             else:
-                return (path, sample, None)
+                return [path, sample, None]
 
 def get_datasets(params, train=True):
-    return DatasetA(params, train), DatasetB(params, train)
+    return DatasetA(params, train, params.mask), DatasetB(params, train, params.mask)
 
 if __name__=="__main__":
     from argparse import Namespace
