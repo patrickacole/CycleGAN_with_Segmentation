@@ -48,8 +48,8 @@ if __name__ == "__main__":
 
     print("Beginning to test...")
     for fx, data_x in zip(filenamesx,datasetx):
-	print(fx.eval())
-	print(data_x)
+        print(fx.eval())
+        print(data_x)
         for fy, data_y in zip(filenamesy,datasety):
             G_x_out, G_y_out = model(data_x, data_y)
             # Save G_x_out as fx->fy.jpg
