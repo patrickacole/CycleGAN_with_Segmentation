@@ -71,6 +71,7 @@ class DatasetA(Dataset):
     def __init__(self, params, train=True, mask=False):
         self.train = train
         self.mask = mask
+        self.size = params.image_size
         t = transforms.Compose([ transforms.Resize(params.image_size),
                                   transforms.ToTensor() ])
         if self.train:
@@ -93,19 +94,20 @@ class DatasetA(Dataset):
             if self.mask:
                 return [sample, self.masks[idx]]
             else:
-                return [sample, None]
+                return [sample, torch.ones(1,self.size,self.size)]
         else:
             path, sample = self.data[idx]
             sample = (2 * sample) - 1.0
             if self.mask:
                 return [path, sample, self.masks[idx]]
             else:
-                return [path, sample, None]
+                return [path, sample, torch.ones(1,self.size,self.size)]
 
 class DatasetB(Dataset):
     def __init__(self, params, train=True, mask=False):
         self.train = train
         self.mask = mask
+        self.size = params.image_size
         t = transforms.Compose([ transforms.Resize(params.image_size),
                                   transforms.ToTensor() ])
         if self.train:
@@ -128,14 +130,14 @@ class DatasetB(Dataset):
             if self.mask:
                 return [sample, self.masks[idx]]
             else:
-                return [sample, None]
+                return [sample, torch.ones(1,self.size,self.size)]
         else:
             path, sample = self.data[idx]
             sample = (2 * sample) - 1.0
             if self.mask:
                 return [path, sample, self.masks[idx]]
             else:
-                return [path, sample, None]
+                return [path, sample, torch.ones(1,self.size,self.size)]
 
 def get_datasets(params, train=True):
     return DatasetA(params, train, params.mask), DatasetB(params, train, params.mask)
