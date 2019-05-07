@@ -23,7 +23,7 @@ def get_test_dataset(params, pprocess=True):
     x_ds = x.map(lambda f: preprocess(f, params.image_size, pprocess=pprocess))
     y = tf.data.Dataset.from_tensor_slices(load_dir(params.test_path_b))
     y_ds = y.map(lambda f: preprocess(f, params.image_size, pprocess=pprocess))
-    return x_ds, y_ds
+    return (x, x_ds), (y, y_ds)
 
 def load_dir(path):
     """

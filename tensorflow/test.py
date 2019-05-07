@@ -11,7 +11,7 @@ from utils.params import *
 from utils.data_loader import *
 
 def save_outputs(outputs, filenames_in, filenames_out, out_directory, pprocess=True):
-    raise NotImplementedError("This function needs to be verified before use")
+    #raise NotImplementedError("This function needs to be verified before use")
     if not os.path.exists(out_directory):
         os.makedirs(out_directory)
     for i in range(outputs.shape[0]):
@@ -34,7 +34,11 @@ if __name__ == "__main__":
 
     # load data
     print("Loading data...")
-    datasetx, datasety = get_test_dataset(param)
+    x, y = get_test_dataset(param)
+    filenamesx = x[0]
+    datasetx = x[1]
+    filenamesy = y[0]
+    datasety = y[1]
     datasetx = datasetx.batch(param.batch_size)
     datasety = datasety.batch(param.batch_size)
 
@@ -43,8 +47,10 @@ if __name__ == "__main__":
     model.load(param)
 
     print("Beginning to test...")
-    for i, fx, data_x in enumerate(datasetx):
-        for j, fy, data_y in enumerate(datasety):
+    for fx, data_x in zip(filenamesx,datasetx):
+	print(fx.eval())
+	print(data_x)
+        for fy, data_y in zip(filenamesy,datasety):
             G_x_out, G_y_out = model(data_x, data_y)
             # Save G_x_out as fx->fy.jpg
             save_outputs(G_x_out, fx, fy, param.out_directory)

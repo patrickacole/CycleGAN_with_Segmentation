@@ -53,6 +53,8 @@ if __name__ == "__main__":
 
             if i%100 == 0:
                 print(f'Training loss at epoch {e+1} step {i}: {float(avgloss / (i + 1))}')
-
+            
+        epoch_end_time = time.time()
+	print(f'Epoch {e+1} training time: {epoch_end_time - epoch_start_time}')
         if (e + 1) % 10:
             model.save(e + 1)
